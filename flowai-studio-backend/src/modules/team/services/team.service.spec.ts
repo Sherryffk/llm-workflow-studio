@@ -91,7 +91,7 @@ describe('TeamService', () => {
           description: null,
           avatar: null,
           members: [{ role: 'owner' }],
-          _count: { members: 3, applications: 2 },
+          _count: { members: 3, teamApplications: 2 },
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -117,7 +117,7 @@ describe('TeamService', () => {
       prisma.team.findUnique.mockResolvedValue({
         id: 'team-1',
         members: [],
-        applications: [],
+        teamApplications: [],
       });
       await expect(service.getTeam('user-1', 'team-1')).rejects.toThrow(ForbiddenException);
     });
@@ -130,7 +130,7 @@ describe('TeamService', () => {
         avatar: null,
         ownerId: 'owner-1',
         members: [{ userId: 'user-1', role: 'editor', joinedAt: new Date(), user: { id: 'user-1', username: 'test', avatar: null } }],
-        applications: [],
+        teamApplications: [],
         createdAt: new Date(),
         updatedAt: new Date(),
       };
