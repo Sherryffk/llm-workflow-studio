@@ -42,6 +42,7 @@ export class JwtAuthGuard implements CanActivate {
 
 // 扩展Express Request类型
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: JwtPayload;

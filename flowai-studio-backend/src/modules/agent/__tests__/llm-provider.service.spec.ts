@@ -12,7 +12,8 @@ import { QwenProvider } from '../providers/qwen.provider';
 
 // Mock axios
 jest.mock('axios');
-const axios = require('axios');
+import axios from 'axios';
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('QwenProvider', () => {
   let provider: QwenProvider;
@@ -28,7 +29,7 @@ describe('QwenProvider', () => {
 
   describe('chat', () => {
     it('should call Qwen API and return response', async () => {
-      axios.post.mockResolvedValue({
+      mockedAxios.post.mockResolvedValue({
         data: {
           choices: [{ message: { content: '你好！' }, finish_reason: 'stop' }],
           usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
@@ -47,7 +48,7 @@ describe('QwenProvider', () => {
     });
 
     it('should parse tool calls from response', async () => {
-      axios.post.mockResolvedValue({
+      mockedAxios.post.mockResolvedValue({
         data: {
           choices: [{
             message: {
@@ -75,7 +76,7 @@ describe('QwenProvider', () => {
     });
 
     it('should handle API errors', async () => {
-      axios.post.mockRejectedValue({
+      mockedAxios.post.mockRejectedValue({
         response: { data: { error: { message: 'API 限流' } } },
         message: 'Request failed',
       });
