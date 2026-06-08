@@ -9,6 +9,10 @@ import Skill from '../pages/Skill'
 import McpManager from '../pages/McpManager'
 import TemplateMarket from '../pages/TemplateMarket'
 import Debug from '../pages/Debug'
+import TeamManagement from '../pages/TeamManagement'
+import TeamDetail from '../pages/TeamDetail'
+import ApiKeyManagement from '../pages/ApiKeyManagement'
+import SharedApp from '../pages/SharedApp'
 import { useStore } from '../store'
 
 // 鉴权守卫
@@ -29,6 +33,7 @@ export const router = createBrowserRouter(
       {/* 公共路由 */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/share/:shareLink" element={<SharedApp />} />
       
       {/* 受保护路由 */}
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
@@ -40,6 +45,9 @@ export const router = createBrowserRouter(
         <Route path="/mcp" element={<McpManager />} />
         <Route path="/templates" element={<TemplateMarket />} />
         <Route path="/debug" element={<Debug />} />
+        <Route path="/teams" element={<TeamManagement />} />
+        <Route path="/teams/:teamId" element={<TeamDetail />} />
+        <Route path="/api-keys" element={<ApiKeyManagement />} />
       </Route>
       
       {/* 404路由 */}

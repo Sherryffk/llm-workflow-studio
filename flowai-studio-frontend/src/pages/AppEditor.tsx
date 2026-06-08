@@ -7,6 +7,7 @@ import {
   AppstoreOutlined,
   BugOutlined,
   SettingOutlined,
+  ShareAltOutlined,
 } from '@ant-design/icons'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
@@ -15,9 +16,10 @@ import WorkflowCanvas from '../components/workflow/WorkflowCanvas'
 import NodePanel from '../components/workflow/NodePanel'
 import ConfigPanel from '../components/workflow/ConfigPanel'
 import RunPanel from '../components/workflow/RunPanel'
+import AppShareSettings from '../components/AppShareSettings'
 import './AppEditor.css'
 
-type RightPanel = 'config' | 'debug'
+type RightPanel = 'config' | 'debug' | 'share'
 
 const AppEditor: React.FC = () => {
   const { appId } = useParams<{ appId: string }>()
@@ -130,6 +132,12 @@ const AppEditor: React.FC = () => {
             >
               <BugOutlined /> 调试
             </button>
+            <button
+              className={`editor-panel-tab ${rightPanel === 'share' ? 'editor-panel-tab--active' : ''}`}
+              onClick={() => setRightPanel('share')}
+            >
+              <ShareAltOutlined /> 分享
+            </button>
           </div>
         </div>
 
@@ -162,7 +170,11 @@ const AppEditor: React.FC = () => {
           <div className="editor-canvas-wrapper">
             <WorkflowCanvas />
           </div>
-          {rightPanel === 'config' ? <ConfigPanel /> : <RunPanel />}
+          {rightPanel === 'config' ? <ConfigPanel /> : rightPanel === 'debug' ? <RunPanel /> : (
+            <div className="editor-share-panel">
+              <AppShareSettings appId={appId!} />
+            </div>
+          )}
         </div>
       </ReactFlowProvider>
     </div>

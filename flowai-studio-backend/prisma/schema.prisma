@@ -8,7 +8,7 @@ datasource db {
 }
 
 // ============================================================
-// 用户与权限
+// 用户与权限 (RBAC)
 // ============================================================
 
 // 用户表
@@ -17,6 +17,8 @@ model User {
   username  String   @unique
   password  String
   avatar    String?
+  // 全局角色: admin / member
+  globalRole String  @default("member")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -27,6 +29,9 @@ model User {
   chatHistories   ChatHistory[]
   mcpServers      McpServer[]
   templates       WorkflowTemplate[]
+  ownedTeams      Team[]              @relation("TeamOwner")
+  teamMemberships TeamMember[]
+  apiKeys         ApiKey[]
 
   @@map("users")
 }
@@ -51,7 +56,9 @@ model Application {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // 关联
-  workflows Workflow[]
+  workflows       Workflow[]
+  teamApplications TeamApplication[]
+  appShares       AppShare[]
 
   @@map("applications")
 }
@@ -419,4 +426,96 @@ model McpServer {
 
   @@unique([name, userId])
   @@map("mcp_servers")
+}
+
+// ============================================================
+// 团队与权限 (RBAC)
+// ============================================================
+
+// 团队表
+model Team {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  avatar      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 外键
+  ownerId String
+  owner   User   @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // 关联
+  members         TeamMember[]
+  teamApplications TeamApplication[]
+
+  @@map("teams")
+}
+
+// 团队成员表
+model TeamMember {
+  id        String   @id @default(uuid())
+  role      String   @default("viewer") // owner, admin, editor, viewer
+  joinedAt  DateTime @default(now())
+
+  // 外键
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+// 团队应用关联表
+model TeamApplication {
+  id         String   @id @default(uuid())
+  permission String   @default("can_view") // full_access, can_edit, can_view
+  addedAt    DateTime @default(now())
+
+  // 外键
+  teamId        String
+  team          Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, applicationId])
+  @@map("team_applications")
+}
+
+// API 密钥表
+model ApiKey {
+  id        String   @id @default(uuid())
+  name      String
+  keyHash   String   @unique
+  keyPrefix String   // sk-xxxx 前缀用于识别
+  scopes    String   // JSON 数组, 如 '["app:read","app:execute"]'
+  isActive  Boolean  @default(true)
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  // 外键
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+// 应用分享表
+model AppShare {
+  id            String   @id @default(uuid())
+  shareLink     String   @unique
+  isPublic      Boolean  @default(false)
+  accessCount   Int      @default(0)
+  embedConfig   String?  // JSON 配置
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // 外键
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("app_shares")
 }

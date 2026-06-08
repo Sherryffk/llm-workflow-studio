@@ -12,10 +12,12 @@ import { AppService } from './app.service';
 import { CreateAppDto } from './dto/create-app.dto';
 import { UpdateAppDto } from './dto/update-app.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { PermissionGuard } from '../../common/guards/permission.guard';
+import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('apps')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard)
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
@@ -33,6 +35,7 @@ export class AppController {
   }
 
   @Get(':id')
+  @RequirePermissions('app:read')
   findOne(
     @CurrentUser('userId') userId: string,
     @Param('id') id: string,
@@ -41,6 +44,7 @@ export class AppController {
   }
 
   @Patch(':id')
+  @RequirePermissions('app:update')
   update(
     @CurrentUser('userId') userId: string,
     @Param('id') id: string,
@@ -50,6 +54,7 @@ export class AppController {
   }
 
   @Delete(':id')
+  @RequirePermissions('app:delete')
   remove(
     @CurrentUser('userId') userId: string,
     @Param('id') id: string,
@@ -58,6 +63,7 @@ export class AppController {
   }
 
   @Patch(':id/publish')
+  @RequirePermissions('app:publish')
   publish(
     @CurrentUser('userId') userId: string,
     @Param('id') id: string,
@@ -66,6 +72,7 @@ export class AppController {
   }
 
   @Patch(':id/unpublish')
+  @RequirePermissions('app:publish')
   unpublish(
     @CurrentUser('userId') userId: string,
     @Param('id') id: string,
@@ -74,6 +81,7 @@ export class AppController {
   }
 
   @Patch(':id/archive')
+  @RequirePermissions('app:delete')
   archive(
     @CurrentUser('userId') userId: string,
     @Param('id') id: string,
@@ -82,6 +90,7 @@ export class AppController {
   }
 
   @Patch(':id/unarchive')
+  @RequirePermissions('app:delete')
   unarchive(
     @CurrentUser('userId') userId: string,
     @Param('id') id: string,

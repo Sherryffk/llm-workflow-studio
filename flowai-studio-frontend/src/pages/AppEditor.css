@@ -152,3 +152,14 @@
   position: relative;
   overflow: hidden;
 }
+
+
+/* ---- Share panel ---- */
+.editor-share-panel {
+  width: 380px;
+  min-width: 320px;
+  background: #fff;
+  border-left: 1px solid #f0f0f0;
+  overflow-y: auto;
+  padding: 20px;
+}

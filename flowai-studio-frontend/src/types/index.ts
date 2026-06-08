@@ -366,3 +366,150 @@ export const TEMPLATE_CATEGORY_OPTIONS: { label: string; value: TemplateCategory
   { label: '开发', value: 'development', icon: '💻' },
   { label: '其他', value: 'other', icon: '📦' },
 ]
+
+// ============================================================
+// 团队与权限 (Phase 5 - RBAC)
+// ============================================================
+
+export type TeamRole = 'owner' | 'admin' | 'editor' | 'viewer'
+export type TeamAppPermission = 'full_access' | 'can_edit' | 'can_view'
+export type GlobalRole = 'admin' | 'member'
+export type ApiKeyScope = 'app:read' | 'app:write' | 'app:execute' | 'workflow:read' | 'workflow:write' | 'knowledge:read' | 'knowledge:write'
+
+export interface Team {
+  id: string
+  name: string
+  description?: string
+  avatar?: string
+  ownerId: string
+  createdAt: string
+  updatedAt: string
+  memberCount?: number
+  members?: TeamMember[]
+  applications?: TeamApplication[]
+}
+
+export interface TeamMember {
+  id: string
+  teamId: string
+  userId: string
+  role: TeamRole
+  joinedAt: string
+  user?: User
+}
+
+export interface TeamApplication {
+  id: string
+  teamId: string
+  applicationId: string
+  permission: TeamAppPermission
+  addedAt: string
+  application?: any
+}
+
+export interface ApiKey {
+  id: string
+  name: string
+  keyPrefix: string
+  scopes: ApiKeyScope[]
+  isActive: boolean
+  lastUsedAt?: string
+  expiresAt?: string
+  createdAt: string
+}
+
+export interface ApiKeyCreatedResponse {
+  id: string
+  name: string
+  key: string
+  keyPrefix: string
+  createdAt: string
+}
+
+export interface AppShare {
+  id: string
+  applicationId: string
+  shareLink: string
+  isPublic: boolean
+  accessCount: number
+  embedConfig?: EmbedConfig
+  createdAt: string
+}
+
+export interface EmbedConfig {
+  enabled: boolean
+  width?: string
+  height?: string
+  theme?: 'light' | 'dark' | 'auto'
+  showHeader?: boolean
+}
+
+// 表单类型
+export interface CreateTeamForm {
+  name: string
+  description?: string
+}
+
+export interface AddMemberForm {
+  userId: string
+  role: TeamRole
+}
+
+export interface AddTeamAppForm {
+  applicationId: string
+  permission: TeamAppPermission
+}
+
+export interface CreateApiKeyForm {
+  name: string
+  scopes: ApiKeyScope[]
+  expiresAt?: string
+}
+
+export interface UpdateShareSettingsForm {
+  isPublic?: boolean
+  embedConfig?: EmbedConfig
+}
+
+// 常量
+export const TEAM_ROLE_LABELS: Record<TeamRole, string> = {
+  owner: '所有者',
+  admin: '管理员',
+  editor: '编辑者',
+  viewer: '查看者',
+}
+
+export const TEAM_APP_PERMISSION_LABELS: Record<TeamAppPermission, string> = {
+  full_access: '完全访问',
+  can_edit: '可编辑',
+  can_view: '仅查看',
+}
+
+export const API_KEY_SCOPE_OPTIONS: { label: string; value: ApiKeyScope }[] = [
+  { label: '应用读取', value: 'app:read' },
+  { label: '应用写入', value: 'app:write' },
+  { label: '应用执行', value: 'app:execute' },
+  { label: '工作流读取', value: 'workflow:read' },
+  { label: '工作流写入', value: 'workflow:write' },
+  { label: '知识库读取', value: 'knowledge:read' },
+  { label: '知识库写入', value: 'knowledge:write' },
+]
+
+// 补充类型
+export interface UpdateTeamForm {
+  name?: string
+  description?: string
+}
+
+export interface UpdateMemberRoleForm {
+  role: TeamRole
+}
+
+export interface UpdateTeamAppPermissionForm {
+  permission: TeamAppPermission
+}
+
+export interface EmbedCodeResponse {
+  iframeCode: string
+  scriptCode: string
+}

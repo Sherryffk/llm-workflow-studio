@@ -15,6 +15,8 @@ import {
   RadarChartOutlined,
   ThunderboltOutlined,
   CaretDownOutlined,
+  TeamOutlined,
+  KeyOutlined,
 } from '@ant-design/icons'
 import { useStore } from '../../store'
 import './Layout.css'
@@ -29,6 +31,8 @@ const routeMeta: Record<string, { title: string }> = {
   '/mcp': { title: 'MCP 服务器' },
   '/templates': { title: '模板市场' },
   '/debug': { title: '调试中心' },
+  '/teams': { title: '团队管理' },
+  '/api-keys': { title: 'API 密钥' },
 }
 
 const Layout: React.FC = () => {
@@ -43,85 +47,37 @@ const Layout: React.FC = () => {
   }
 
   const menuItems = [
-    {
-      key: '/apps',
-      icon: <AppstoreOutlined />,
-      label: '工作台',
-    },
-    {
-      key: '/knowledge-bases',
-      icon: <BookOutlined />,
-      label: '知识库',
-    },
-    {
-      key: '/tools',
-      icon: <ToolOutlined />,
-      label: '工具管理',
-    },
-    {
-      key: '/mcp',
-      icon: <ApiOutlined />,
-      label: 'MCP 服务器',
-    },
-    {
-      key: '/templates',
-      icon: <ShopOutlined />,
-      label: '模板市场',
-    },
-    {
-      key: '/debug',
-      icon: <BugOutlined />,
-      label: '调试中心',
-    },
+    { key: '/apps', icon: <AppstoreOutlined />, label: '工作台' },
+    { key: '/knowledge-bases', icon: <BookOutlined />, label: '知识库' },
+    { key: '/tools', icon: <ToolOutlined />, label: '工具管理' },
+    { key: '/mcp', icon: <ApiOutlined />, label: 'MCP 服务器' },
+    { key: '/templates', icon: <ShopOutlined />, label: '模板市场' },
+    { key: '/debug', icon: <BugOutlined />, label: '调试中心' },
+    { key: '/teams', icon: <TeamOutlined />, label: '团队管理' },
+    { key: '/api-keys', icon: <KeyOutlined />, label: 'API 密钥' },
   ]
 
   const userMenu = [
-    {
-      key: 'profile',
-      label: '个人资料',
-      icon: <UserOutlined />,
-    },
-    {
-      type: 'divider' as const,
-    },
-    {
-      key: 'logout',
-      label: '退出登录',
-      icon: <LogoutOutlined />,
-      danger: true,
-    },
+    { key: 'profile', label: '个人资料', icon: <UserOutlined /> },
+    { type: 'divider' as const },
+    { key: 'logout', label: '退出登录', icon: <LogoutOutlined />, danger: true },
   ]
 
   const handleUserMenuClick = ({ key }: { key: string }) => {
-    if (key === 'logout') {
-      logout()
-      navigate('/login')
-    }
+    if (key === 'logout') { logout(); navigate('/login') }
   }
 
-  const handleMenuClick = ({ key }: { key: string }) => {
-    navigate(key)
-  }
+  const handleMenuClick = ({ key }: { key: string }) => { navigate(key) }
 
   const selectedKey = '/' + (location.pathname.split('/')[1] || 'apps')
   const pageMeta = useMemo(() => routeMeta[selectedKey] || routeMeta['/apps'], [selectedKey])
 
   return (
     <AntLayout className="layout-container">
-      <Sider
-        trigger={null}
-        collapsible
-        collapsed={collapsed}
-        width={220}
-        collapsedWidth={64}
-        className="sidebar"
-      >
+      <Sider trigger={null} collapsible collapsed={collapsed} width={220} collapsedWidth={64} className="sidebar">
         <div className="sidebar-shell">
-          {/* Logo */}
           <div className="logo">
-            <div className="logo-mark">
-              <RadarChartOutlined />
-            </div>
+            <div className="logo-mark"><RadarChartOutlined /></div>
             {!collapsed && (
               <div className="logo-copy">
                 <h1 className="logo-text">FlowAI Studio</h1>
@@ -129,22 +85,11 @@ const Layout: React.FC = () => {
               </div>
             )}
           </div>
-
           {!collapsed && <div className="sidebar-section-label">Navigation</div>}
-
-          <Menu
-            mode="inline"
-            selectedKeys={[selectedKey]}
-            items={menuItems}
-            onClick={handleMenuClick}
-            className="menu"
-          />
-
+          <Menu mode="inline" selectedKeys={[selectedKey]} items={menuItems} onClick={handleMenuClick} className="menu" />
           {!collapsed && (
             <div className="sidebar-footer-card">
-              <div className="sidebar-footer-icon">
-                <ThunderboltOutlined />
-              </div>
+              <div className="sidebar-footer-icon"><ThunderboltOutlined /></div>
               <div>
                 <strong>FlowAI Studio</strong>
                 <p>用 AI 工作流自动化你的业务流程。</p>
@@ -153,51 +98,25 @@ const Layout: React.FC = () => {
           )}
         </div>
       </Sider>
-
       <AntLayout className="layout-main">
-        {/* Top bar */}
         <Header className="header">
           <div className="header-left">
-            <Button
-              type="text"
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={handleToggle}
-              className="trigger"
-            />
-            <div className="header-copy">
-              <Title level={3}>{pageMeta.title}</Title>
-            </div>
+            <Button type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={handleToggle} className="trigger" />
+            <div className="header-copy"><Title level={3}>{pageMeta.title}</Title></div>
           </div>
-
           <div className="header-right">
-            <div className="header-online-dot">
-              <span className="online-dot" />
-              <span className="online-text">在线</span>
-            </div>
-            <Dropdown
-              menu={{ items: userMenu, onClick: handleUserMenuClick }}
-              trigger={['click']}
-              placement="bottomRight"
-            >
+            <div className="header-online-dot"><span className="online-dot" /><span className="online-text">在线</span></div>
+            <Dropdown menu={{ items: userMenu, onClick: handleUserMenuClick }} trigger={['click']} placement="bottomRight">
               <div className="profile-chip">
-                <Avatar
-                  size={26}
-                  icon={<UserOutlined />}
-                  style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', flexShrink: 0 }}
-                />
-                <div className="profile-copy">
-                  <span className="username">{user?.username || '用户'}</span>
-                </div>
+                <Avatar size={26} icon={<UserOutlined />} style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', flexShrink: 0 }} />
+                <div className="profile-copy"><span className="username">{user?.username || '用户'}</span></div>
                 <CaretDownOutlined className="profile-caret" />
               </div>
             </Dropdown>
           </div>
         </Header>
-
         <Content className="content">
-          <div className="content-container">
-            <Outlet />
-          </div>
+          <div className="content-container"><Outlet /></div>
         </Content>
       </AntLayout>
     </AntLayout>

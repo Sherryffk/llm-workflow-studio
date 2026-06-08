@@ -12,6 +12,7 @@ import { RAGModule } from './modules/rag/rag.module';
 import { SkillModule } from './modules/skill/skill.module';
 import { AiModule } from './modules/ai/ai.module';
 import { McpModule } from './modules/mcp/mcp.module';
+import { TeamModule } from './modules/team/team.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { McpModule } from './modules/mcp/mcp.module';
     SkillModule,
     AiModule,
     McpModule,
+    TeamModule,
   ],
 })
 export class AppModule {}
