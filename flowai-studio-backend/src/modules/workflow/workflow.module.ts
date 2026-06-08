@@ -1,7 +1,11 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { WorkflowController } from './workflow.controller';
+import { WorkflowVersionController } from './controllers/workflow-version.controller';
+import { WorkflowTemplateController } from './controllers/workflow-template.controller';
 import { WorkflowService } from './workflow.service';
 import { WorkflowExecutorService } from './services/workflow-executor.service';
+import { WorkflowVersionService } from './services/workflow-version.service';
+import { WorkflowTemplateService } from './services/workflow-template.service';
 import { NodeExecutorFactory } from './services/node-executor.factory';
 import { StartNodeExecutor } from './services/node-executors/start-node.executor';
 import { UserInputNodeExecutor } from './services/node-executors/user-input-node.executor';
@@ -10,17 +14,21 @@ import { RAGNodeExecutor } from './services/node-executors/rag-node.executor';
 import { SkillNodeExecutor } from './services/node-executors/skill-node.executor';
 import { ConditionNodeExecutor } from './services/node-executors/condition-node.executor';
 import { OutputNodeExecutor } from './services/node-executors/output-node.executor';
+import { AgentNodeExecutor } from './services/node-executors/agent-node.executor';
 import { PrismaModule } from '../../common/modules/prisma.module';
 import { RAGModule } from '../rag/rag.module';
 import { SkillModule } from '../skill/skill.module';
 import { AiModule } from '../ai/ai.module';
+import { AgentModule } from '../agent/agent.module';
 
 @Module({
-  imports: [PrismaModule, RAGModule, SkillModule, forwardRef(() => AiModule)],
-  controllers: [WorkflowController],
+  imports: [PrismaModule, RAGModule, SkillModule, forwardRef(() => AiModule), AgentModule],
+  controllers: [WorkflowController, WorkflowVersionController, WorkflowTemplateController],
   providers: [
     WorkflowService,
     WorkflowExecutorService,
+    WorkflowVersionService,
+    WorkflowTemplateService,
     NodeExecutorFactory,
     StartNodeExecutor,
     UserInputNodeExecutor,
@@ -29,6 +37,7 @@ import { AiModule } from '../ai/ai.module';
     SkillNodeExecutor,
     ConditionNodeExecutor,
     OutputNodeExecutor,
+    AgentNodeExecutor,
   ],
   exports: [WorkflowExecutorService],
 })

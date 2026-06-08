@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { envSchema } from './config/env.config';
 import { PrismaModule } from './common/modules/prisma.module';
+import { RedisModule } from './common/modules/redis.module';
+import { CacheModule } from './common/modules/cache.module';
 import { UserModule } from './modules/user/user.module';
 import { AppModule as ApplicationModule } from './modules/app/app.module';
 import { WorkflowModule } from './modules/workflow/workflow.module';
@@ -10,6 +12,7 @@ import { RAGModule } from './modules/rag/rag.module';
 import { SkillModule } from './modules/skill/skill.module';
 import { AiModule } from './modules/ai/ai.module';
 import { McpModule } from './modules/mcp/mcp.module';
+import { TeamModule } from './modules/team/team.module';
 
 @Module({
   imports: [
@@ -27,6 +30,8 @@ import { McpModule } from './modules/mcp/mcp.module';
       },
     }),
     PrismaModule,
+    RedisModule,
+    CacheModule,
     UserModule,
     ApplicationModule,
     WorkflowModule,
@@ -34,6 +39,7 @@ import { McpModule } from './modules/mcp/mcp.module';
     SkillModule,
     AiModule,
     McpModule,
+    TeamModule,
   ],
 })
 export class AppModule {}
