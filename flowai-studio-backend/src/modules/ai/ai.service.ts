@@ -30,6 +30,7 @@ export class AiService {
     const result = await this.workflowExecutor.executeWorkflow(workflowId, {
       inputs: runDto.inputs as Record<string, any>,
       sessionId: runDto.sessionId,
+      userId,
     });
 
     // Extract output node result if present
@@ -75,6 +76,7 @@ export class AiService {
       await this.workflowExecutor.executeWorkflow(workflowId, {
         inputs: streamRunDto.inputs as Record<string, any>,
         sessionId: streamRunDto.sessionId,
+        userId,
       }, sseSubject);
 
       sseSubject.complete();
@@ -277,6 +279,64 @@ export class AiService {
         },
       );
       return response.data.choices[0].message.content;
+    } catch (error) {
+      console.error('Error calling LLM API:', error.response?.data || error.message);
+      throw new Error('Failed to get response from LLM.');
+    }
+  }
+
+  /**
+   * chatWithLLM 的增强版，同时返回 Token 使用量
+   */
+  async chatWithLLMAndUsage(
+    userPrompt: string,
+    systemPrompt?: string,
+    history: any[] = [],
+    model = 'qwen-turbo',
+    temperature = 0.7,
+    maxTokens = 2048,
+  ): Promise<{ content: string; usage: { promptTokens: number; completionTokens: number; totalTokens: number } }> {
+    const apiKey = this.configService.get<string>('QWEN_API_KEY');
+    const baseUrl = this.configService.get<string>('QWEN_BASE_URL');
+
+    const messages = [];
+    if (systemPrompt) {
+      messages.push({ role: 'system', content: systemPrompt });
+    }
+    messages.push(...history);
+    messages.push({ role: 'user', content: userPrompt });
+
+    try {
+      const response = await axios.post(
+        `${baseUrl}/chat/completions`,
+        {
+          model,
+          messages,
+          temperature,
+          max_tokens: maxTokens,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      const usage = response.data.usage || {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      };
+
+      return {
+        content: response.data.choices[0].message.content,
+        usage: {
+          promptTokens: usage.prompt_tokens || 0,
+          completionTokens: usage.completion_tokens || 0,
+          totalTokens: usage.total_tokens || 0,
+        },
+      };
     } catch (error) {
       console.error('Error calling LLM API:', error.response?.data || error.message);
       throw new Error('Failed to get response from LLM.');

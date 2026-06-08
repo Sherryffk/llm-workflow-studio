@@ -79,7 +79,14 @@ export class WorkflowExecutorService {
     }
 
     // BFS-style execution: start from nodes with in-degree 0
-    const context: Record<string, any> = { ...runDto.inputs };
+    const context: Record<string, any> = {
+      ...runDto.inputs,
+      // 注入元数据供节点执行器使用（如 Token 使用量记录）
+      _workflowId: workflowId,
+      _applicationId: workflow.applicationId,
+      _executionId: execId,
+      _userId: runDto.userId,
+    };
     const executed = new Set<string>();
     const skipped = new Set<string>();
     const failed = new Set<string>();
