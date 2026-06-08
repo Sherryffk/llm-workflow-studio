@@ -22,11 +22,14 @@ import { RAGModule } from '../rag/rag.module';
 import { SkillModule } from '../skill/skill.module';
 import { AiModule } from '../ai/ai.module';
 import { AgentModule } from '../agent/agent.module';
+import { RateLimiterService, CircuitBreakerService } from '../../common/guards/rate-limit.guard';
 
 @Module({
   imports: [PrismaModule, RAGModule, SkillModule, forwardRef(() => AiModule), AgentModule],
   controllers: [WorkflowController, WorkflowVersionController, WorkflowTemplateController, WorkflowDslController],
   providers: [
+    RateLimiterService,
+    CircuitBreakerService,
     WorkflowService,
     WorkflowExecutorService,
     WorkflowVersionService,

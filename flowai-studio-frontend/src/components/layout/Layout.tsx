@@ -18,6 +18,7 @@ import {
   TeamOutlined,
   KeyOutlined,
   BarChartOutlined,
+  SafetyOutlined,
 } from '@ant-design/icons'
 import { useStore } from '../../store'
 import './Layout.css'
@@ -35,6 +36,7 @@ const routeMeta: Record<string, { title: string }> = {
   '/teams': { title: '团队管理' },
   '/api-keys': { title: 'API 密钥' },
   '/cost-statistics': { title: '成本统计' },
+  '/rate-limit': { title: '限流监控' },
 }
 
 const Layout: React.FC = () => {
@@ -58,6 +60,7 @@ const Layout: React.FC = () => {
     { key: '/teams', icon: <TeamOutlined />, label: '团队管理' },
     { key: '/api-keys', icon: <KeyOutlined />, label: 'API 密钥' },
     { key: '/cost-statistics', icon: <BarChartOutlined />, label: '成本统计' },
+    { key: '/rate-limit', icon: <SafetyOutlined />, label: '限流监控' },
   ]
 
   const userMenu = [
