@@ -44,7 +44,7 @@ export class TeamService {
         members: { some: { userId } },
       },
       include: {
-        _count: { select: { members: true, applications: true } },
+        _count: { select: { members: true, teamApplications: true } },
         members: {
           where: { userId },
           select: { role: true },
@@ -60,7 +60,7 @@ export class TeamService {
       avatar: t.avatar,
       myRole: t.members[0]?.role || 'viewer',
       memberCount: t._count.members,
-      appCount: t._count.applications,
+      appCount: t._count.teamApplications,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
     }));
@@ -80,7 +80,7 @@ export class TeamService {
           },
           orderBy: { joinedAt: 'asc' },
         },
-        applications: {
+        teamApplications: {
           include: {
             application: {
               select: { id: true, name: true, description: true, icon: true, status: true },
@@ -104,7 +104,7 @@ export class TeamService {
       myRole: membership.role,
       ownerId: team.ownerId,
       members: team.members,
-      applications: team.applications.map((ta) => ({
+      applications: team.teamApplications.map((ta: any) => ({
         id: ta.id,
         permission: ta.permission,
         addedAt: ta.addedAt,

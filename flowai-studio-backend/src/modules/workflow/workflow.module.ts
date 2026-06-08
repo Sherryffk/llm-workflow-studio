@@ -2,10 +2,12 @@ import { Module, forwardRef } from '@nestjs/common';
 import { WorkflowController } from './workflow.controller';
 import { WorkflowVersionController } from './controllers/workflow-version.controller';
 import { WorkflowTemplateController } from './controllers/workflow-template.controller';
+import { WorkflowDslController } from './controllers/workflow-dsl.controller';
 import { WorkflowService } from './workflow.service';
 import { WorkflowExecutorService } from './services/workflow-executor.service';
 import { WorkflowVersionService } from './services/workflow-version.service';
 import { WorkflowTemplateService } from './services/workflow-template.service';
+import { WorkflowDslService } from './services/workflow-dsl.service';
 import { NodeExecutorFactory } from './services/node-executor.factory';
 import { StartNodeExecutor } from './services/node-executors/start-node.executor';
 import { UserInputNodeExecutor } from './services/node-executors/user-input-node.executor';
@@ -23,12 +25,13 @@ import { AgentModule } from '../agent/agent.module';
 
 @Module({
   imports: [PrismaModule, RAGModule, SkillModule, forwardRef(() => AiModule), AgentModule],
-  controllers: [WorkflowController, WorkflowVersionController, WorkflowTemplateController],
+  controllers: [WorkflowController, WorkflowVersionController, WorkflowTemplateController, WorkflowDslController],
   providers: [
     WorkflowService,
     WorkflowExecutorService,
     WorkflowVersionService,
     WorkflowTemplateService,
+    WorkflowDslService,
     NodeExecutorFactory,
     StartNodeExecutor,
     UserInputNodeExecutor,

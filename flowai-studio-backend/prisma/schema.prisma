@@ -59,6 +59,7 @@ model Application {
   workflows       Workflow[]
   teamApplications TeamApplication[]
   appShares       AppShare[]
+  apiKeys         ApiKey[]
 
   @@map("applications")
 }
@@ -500,6 +501,10 @@ model ApiKey {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // 可选: 关联到特定应用
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
   @@map("api_keys")
 }
 
@@ -514,7 +519,7 @@ model AppShare {
   updatedAt     DateTime @updatedAt
 
   // 外键
-  applicationId String
+  applicationId String  @unique
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@map("app_shares")
