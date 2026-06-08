@@ -176,6 +176,7 @@ export class AppService {
 
     // 非所有者需要 can_edit 权限
     const app = await this.prisma.application.findUnique({ where: { id } });
+    if (!app) throw new NotFoundException('Application not found');
     if (app.userId !== userId) {
       const hasEdit = await this.checkTeamAccess(userId, id, 'can_edit');
       if (!hasEdit) {
@@ -202,6 +203,7 @@ export class AppService {
     await this.assertAppAccess(userId, id);
 
     const app = await this.prisma.application.findUnique({ where: { id } });
+    if (!app) throw new NotFoundException('Application not found');
     if (app.userId !== userId) {
       const hasFull = await this.checkTeamAccess(userId, id, 'full_access');
       if (!hasFull) {
@@ -217,6 +219,7 @@ export class AppService {
     await this.assertAppAccess(userId, id);
 
     const app = await this.prisma.application.findUnique({ where: { id } });
+    if (!app) throw new NotFoundException('Application not found');
     if (app.userId !== userId) {
       const hasEdit = await this.checkTeamAccess(userId, id, 'can_edit');
       if (!hasEdit) {
@@ -235,6 +238,7 @@ export class AppService {
     await this.assertAppAccess(userId, id);
 
     const app = await this.prisma.application.findUnique({ where: { id } });
+    if (!app) throw new NotFoundException('Application not found');
     if (app.userId !== userId) {
       const hasEdit = await this.checkTeamAccess(userId, id, 'can_edit');
       if (!hasEdit) {
@@ -253,6 +257,7 @@ export class AppService {
     await this.assertAppAccess(userId, id);
 
     const app = await this.prisma.application.findUnique({ where: { id } });
+    if (!app) throw new NotFoundException('Application not found');
     if (app.userId !== userId) {
       const hasFull = await this.checkTeamAccess(userId, id, 'full_access');
       if (!hasFull) {
@@ -271,6 +276,7 @@ export class AppService {
     await this.assertAppAccess(userId, id);
 
     const app = await this.prisma.application.findUnique({ where: { id } });
+    if (!app) throw new NotFoundException('Application not found');
     if (app.userId !== userId) {
       const hasFull = await this.checkTeamAccess(userId, id, 'full_access');
       if (!hasFull) {

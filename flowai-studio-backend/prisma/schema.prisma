@@ -32,6 +32,7 @@ model User {
   ownedTeams      Team[]              @relation("TeamOwner")
   teamMemberships TeamMember[]
   apiKeys         ApiKey[]
+  tokenUsageRecords TokenUsageRecord[]
 
   @@map("users")
 }
@@ -59,6 +60,8 @@ model Application {
   workflows       Workflow[]
   teamApplications TeamApplication[]
   appShares       AppShare[]
+  apiKeys         ApiKey[]
+  tokenUsageRecords TokenUsageRecord[]
 
   @@map("applications")
 }
@@ -93,6 +96,7 @@ model Workflow {
   // 关联
   executions WorkflowExecution[]
   versions   WorkflowVersion[]
+  tokenUsageRecords TokenUsageRecord[]
 
   @@map("workflows")
 }
@@ -205,6 +209,9 @@ model WorkflowExecution {
   // 外键
   workflowId String
   workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  // 关联
+  tokenUsageRecords TokenUsageRecord[]
 
   @@map("workflow_executions")
 }
@@ -500,6 +507,10 @@ model ApiKey {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // 可选: 关联到特定应用
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
   @@map("api_keys")
 }
 
@@ -514,8 +525,55 @@ model AppShare {
   updatedAt     DateTime @updatedAt
 
   // 外键
-  applicationId String
+  applicationId String  @unique
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@map("app_shares")
+}
+
+// ============================================================
+// Token 使用量与成本统计 (Phase 6.2)
+// ============================================================
+
+// Token 使用记录表
+model TokenUsageRecord {
+  id String @id @default(uuid())
+
+  // 关联资源
+  userId        String
+  applicationId String?
+  workflowId    String?
+  executionId   String?  // 关联工作流执行记录
+
+  // 模型信息
+  provider String  // openai, claude, qwen, gemini, ollama
+  model    String  // gpt-4o, qwen-max, etc.
+
+  // Token 使用量
+  promptTokens     Int
+  completionTokens Int
+  totalTokens      Int
+
+  // 成本 (USD)
+  cost Float @default(0)
+
+  // 调用类型: chat, embedding, agent
+  callType String @default("chat")
+
+  createdAt DateTime @default(now())
+
+  // 外键
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  workflow    Workflow?    @relation(fields: [workflowId], references: [id], onDelete: SetNull)
+  execution   WorkflowExecution? @relation(fields: [executionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([applicationId])
+  @@index([model])
+  @@index([provider])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([applicationId, createdAt])
+  @@map("token_usage_records")
 }

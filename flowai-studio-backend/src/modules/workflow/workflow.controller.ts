@@ -74,7 +74,8 @@ export class WorkflowController {
     @Param('id') id: string,
     @Body() runWorkflowDto: RunWorkflowDto,
   ) {
-    // 校验权限等逻辑...
+    // 注入 userId 供节点执行器使用（如 Token 使用量记录）
+    runWorkflowDto.userId = userId;
     return this.workflowExecutorService.executeWorkflow(id, runWorkflowDto);
   }
 
@@ -111,6 +112,9 @@ export class WorkflowController {
     res.on('close', () => {
       this.workflowExecutorService.cancelExecution(executionId);
     });
+
+    // 注入 userId 供节点执行器使用
+    runWorkflowDto.userId = userId;
 
     try {
       await this.workflowExecutorService.executeWorkflow(

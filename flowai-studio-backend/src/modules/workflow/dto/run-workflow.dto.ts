@@ -48,6 +48,9 @@ export class RunWorkflowDto {
   @IsOptional()
   sessionId?: string;
 
+  /** 执行用户 ID（由 Controller 注入，不暴露给 API） */
+  userId?: string;
+
   /** 执行控制选项（超时、心跳、重试） */
   @IsOptional()
   @ValidateNested()

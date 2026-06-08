@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Button, Modal, Form, Input, message, Empty, Dropdown, Spin } from 'antd'
+import { Button, Modal, Form, Input, Select, Upload, message, Empty, Dropdown, Spin, Alert } from 'antd'
 import {
   PlusOutlined,
   EditOutlined,
@@ -11,11 +11,16 @@ import {
   ArrowRightOutlined,
   InboxOutlined,
   UndoOutlined,
+  ImportOutlined,
+  FileTextOutlined,
+  CheckCircleOutlined,
+  WarningOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { Application } from '../types'
 import { DEMO_APP_NAME, DEMO_NODES, DEMO_EDGES } from '../constants/demoWorkflow'
+import { importWorkflowDsl, validateWorkflowDsl } from '../utils/workflowDslApi'
 import './AppList.css'
 
 const { Search } = Input
@@ -34,6 +39,20 @@ const AppList: React.FC = () => {
   const [form] = Form.useForm()
   const [searchText, setSearchText] = useState('')
   const initDone = useRef(false)
+
+  // DSL 导入相关 state
+  const [importModalOpen, setImportModalOpen] = useState(false)
+  const [importDslContent, setImportDslContent] = useState('')
+  const [importFormat, setImportFormat] = useState<'yaml' | 'json'>('yaml')
+  const [importAppId, setImportAppId] = useState<string>('')
+  const [importNameOverride, setImportNameOverride] = useState('')
+  const [importValidation, setImportValidation] = useState<{
+    valid: boolean
+    errors: string[]
+    warnings: string[]
+  } | null>(null)
+  const [importValidating, setImportValidating] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   useEffect(() => {
     if (initDone.current) return
@@ -114,6 +133,78 @@ const AppList: React.FC = () => {
   const handleEnterEditor = (appId: string) => {
     navigate(`/apps/${appId}/editor`)
   }
+
+  // ===== DSL 导入处理 =====
+
+  const handleOpenImport = () => {
+    setImportDslContent('')
+    setImportFormat('yaml')
+    setImportAppId('')
+    setImportNameOverride('')
+    setImportValidation(null)
+    setImportModalOpen(true)
+  }
+
+  const handleFileUpload = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const content = e.target?.result as string
+      setImportDslContent(content)
+      if (file.name.endsWith('.json')) {
+        setImportFormat('json')
+      } else {
+        setImportFormat('yaml')
+      }
+      setImportValidation(null)
+    }
+    reader.readAsText(file)
+    return false
+  }
+
+  const handleValidate = async () => {
+    if (!importDslContent.trim()) {
+      message.warning('请先上传或粘贴 DSL 内容')
+      return
+    }
+    setImportValidating(true)
+    try {
+      const result = await validateWorkflowDsl(importDslContent, importFormat)
+      setImportValidation(result)
+    } catch {
+      message.error('校验请求失败')
+    } finally {
+      setImportValidating(false)
+    }
+  }
+
+  const handleImportConfirm = async () => {
+    if (!importDslContent.trim()) {
+      message.warning('请先上传或粘贴 DSL 内容')
+      return
+    }
+    if (!importAppId) {
+      message.warning('请选择目标应用')
+      return
+    }
+    setImporting(true)
+    try {
+      const result = await importWorkflowDsl({
+        dsl: importDslContent,
+        format: importFormat,
+        applicationId: importAppId,
+        nameOverride: importNameOverride || undefined,
+      })
+      message.success(`工作流「${result.workflow.name}」导入成功`)
+      setImportModalOpen(false)
+      fetchApps()
+    } catch {
+      message.error('导入失败，请检查 DSL 格式后重试')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  // ===== 原有功能 =====
 
   const getStatusAction = (app: Application) => {
     switch (app.status) {
@@ -228,6 +319,8 @@ const AppList: React.FC = () => {
     archived: { label: '已归档', cls: 'status-badge--archived' },
   }
 
+  const safeApps = Array.isArray(apps) ? apps : []
+
   return (
     <div className="app-list-page">
       {/* Toolbar */}
@@ -245,6 +338,9 @@ const AppList: React.FC = () => {
             allowClear
             prefix={<SearchOutlined style={{ color: 'var(--c-text-tertiary)' }} />}
           />
+          <Button icon={<ImportOutlined />} onClick={handleOpenImport}>
+            导入
+          </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
             新建应用
           </Button>
@@ -328,7 +424,7 @@ const AppList: React.FC = () => {
         </div>
       )}
 
-      {/* Modal */}
+      {/* 新建/编辑应用 Modal */}
       <Modal
         title={isEditing ? '编辑应用' : '新建应用'}
         open={isModalOpen}
@@ -353,6 +449,145 @@ const AppList: React.FC = () => {
             </Button>
           </div>
         </Form>
+      </Modal>
+
+      {/* DSL 导入 Modal */}
+      <Modal
+        title="导入工作流 DSL"
+        open={importModalOpen}
+        onCancel={() => setImportModalOpen(false)}
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Button onClick={() => setImportModalOpen(false)}>取消</Button>
+            <Button
+              icon={<CheckCircleOutlined />}
+              loading={importValidating}
+              onClick={handleValidate}
+            >
+              校验
+            </Button>
+            <Button
+              type="primary"
+              icon={<ImportOutlined />}
+              loading={importing}
+              onClick={handleImportConfirm}
+              disabled={importValidation !== null && !importValidation.valid}
+            >
+              导入
+            </Button>
+          </div>
+        }
+        width={600}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 8 }}>
+          {/* 格式选择 + 文件上传 */}
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>DSL 格式</label>
+              <Select
+                value={importFormat}
+                onChange={setImportFormat}
+                style={{ width: '100%' }}
+                options={[
+                  { value: 'yaml', label: 'YAML (.yaml/.yml)' },
+                  { value: 'json', label: 'JSON (.json)' },
+                ]}
+              />
+            </div>
+            <div style={{ flex: 2 }}>
+              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>上传文件</label>
+              <Upload
+                accept=".yaml,.yml,.json"
+                showUploadList={false}
+                beforeUpload={handleFileUpload}
+              >
+                <Button icon={<FileTextOutlined />}>选择文件</Button>
+              </Upload>
+            </div>
+          </div>
+
+          {/* DSL 内容编辑 */}
+          <div>
+            <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>
+              DSL 内容（可粘贴或上传文件后编辑）
+            </label>
+            <Input.TextArea
+              value={importDslContent}
+              onChange={(e) => {
+                setImportDslContent(e.target.value)
+                setImportValidation(null)
+              }}
+              rows={10}
+              placeholder="粘贴 YAML 或 JSON 格式的 DSL 内容…"
+              style={{ fontFamily: 'monospace', fontSize: 13 }}
+            />
+          </div>
+
+          {/* 校验结果 */}
+          {importValidation && (
+            <Alert
+              type={importValidation.valid ? 'success' : 'error'}
+              showIcon
+              icon={importValidation.valid ? <CheckCircleOutlined /> : <WarningOutlined />}
+              message={importValidation.valid ? 'DSL 格式校验通过' : 'DSL 格式校验失败'}
+              description={
+                <div>
+                  {importValidation.errors.length > 0 && (
+                    <div>
+                      <strong>错误:</strong>
+                      <ul style={{ margin: '4px 0', paddingLeft: 20 }}>
+                        {importValidation.errors.map((err, i) => (
+                          <li key={i} style={{ color: '#cf1322' }}>{err}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {importValidation.warnings.length > 0 && (
+                    <div>
+                      <strong>警告:</strong>
+                      <ul style={{ margin: '4px 0', paddingLeft: 20 }}>
+                        {importValidation.warnings.map((w, i) => (
+                          <li key={i} style={{ color: '#faad14' }}>{w}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              }
+            />
+          )}
+
+          {/* 目标应用选择 */}
+          <div>
+            <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>目标应用 *</label>
+            <Select
+              placeholder="选择要将工作流导入到的应用"
+              value={importAppId || undefined}
+              onChange={setImportAppId}
+              style={{ width: '100%' }}
+              showSearch
+              optionFilterProp="children"
+            >
+              {safeApps.map((app: any) => (
+                <Select.Option key={app.id} value={app.id}>
+                  {app.icon || '📋'} {app.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+
+          {/* 工作流名称（可选覆盖） */}
+          <div>
+            <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>
+              工作流名称（可选，留空使用 DSL 中的名称）
+            </label>
+            <Input
+              value={importNameOverride}
+              onChange={(e) => setImportNameOverride(e.target.value)}
+              placeholder="自定义工作流名称"
+            />
+          </div>
+        </div>
       </Modal>
     </div>
   )
