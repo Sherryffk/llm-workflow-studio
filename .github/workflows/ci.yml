@@ -13,10 +13,12 @@
 name: CI
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
+  # 暂时禁用 CI，后续按需启用
+  # push:
+  #   branches: [main, develop]
+  # pull_request:
+  #   branches: [main]
+  workflow_dispatch: {}
 
 env:
   NODE_VERSION: '20'

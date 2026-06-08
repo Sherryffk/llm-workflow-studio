@@ -1,8 +1,9 @@
 # ============================================================
 # FlowAI Studio - CD Pipeline (自动部署)
 # ============================================================
-# 触发条件: push to main (合并后自动部署)
-# 流程: build docker images → push to registry → deploy
+# 触发条件:
+#   - push to main: 仅验证 Docker build（不 push）
+#   - tag (v*): 构建 + 推送到 GHCR
 #
 # 竞品对标:
 # - Dify: GitHub Actions → Docker Hub → K8s
@@ -12,9 +13,11 @@
 name: CD
 
 on:
-  push:
-    branches: [main]
-    tags: ['v*']
+  # 暂时禁用 CD，后续按需启用
+  # push:
+  #   branches: [main]
+  #   tags: ['v*']
+  workflow_dispatch: {}
 
 env:
   REGISTRY: ghcr.io
@@ -29,6 +32,7 @@ jobs:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
 
+    # 仅在 tag 推送时需要 packages: write 权限
     permissions:
       contents: read
       packages: write
@@ -37,6 +41,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Login to Container Registry
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -58,11 +63,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # main 分支 push: 仅 build 验证（不 push 镜像）
+      # tag 推送: build + push 到 GHCR
       - name: Build and push backend
         uses: docker/build-push-action@v5
         with:
           context: ./flowai-studio-backend
-          push: true
+          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
           tags: ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -71,7 +78,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./flowai-studio-frontend
-          push: true
+          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
           tags: ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

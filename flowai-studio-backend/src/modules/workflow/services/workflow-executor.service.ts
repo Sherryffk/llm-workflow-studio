@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../../../common/services/prisma.service';
 import { NodeExecutorFactory } from './node-executor.factory';
 import { RunWorkflowDto, ExecutionControlDto } from '../dto/run-workflow.dto';
+import { TracingService } from './tracing.service';
 import { Subject } from 'rxjs';
 import {
   withTimeout,
@@ -30,6 +31,7 @@ export class WorkflowExecutorService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly factory: NodeExecutorFactory,
+    @Optional() private readonly tracingService?: TracingService,
   ) {}
 
   async executeWorkflow(
@@ -78,6 +80,22 @@ export class WorkflowExecutorService {
       inDegree.set(edge.target, (inDegree.get(edge.target) || 0) + 1);
     }
 
+    // Start Trace (全链路追踪)
+    let traceId: string | undefined;
+    if (this.tracingService) {
+      try {
+        traceId = await this.tracingService.startTrace({
+          workflowId,
+          userId: runDto.userId,
+          applicationId: workflow.applicationId,
+          executionId: execId,
+          inputs: runDto.inputs,
+        });
+      } catch (e) {
+        this.logger.warn(`Failed to start trace: ${e instanceof Error ? e.message : 'Unknown'}`);
+      }
+    }
+
     // BFS-style execution: start from nodes with in-degree 0
     const context: Record<string, any> = {
       ...runDto.inputs,
@@ -86,6 +104,7 @@ export class WorkflowExecutorService {
       _applicationId: workflow.applicationId,
       _executionId: execId,
       _userId: runDto.userId,
+      _traceId: traceId,
     };
     const executed = new Set<string>();
     const skipped = new Set<string>();
@@ -137,6 +156,21 @@ export class WorkflowExecutorService {
         currentNodeId = nodeId;
         const executor = this.factory.getExecutor(node.type);
 
+        // Start Span (全链路追踪 - 节点级别)
+        let spanId: string | undefined;
+        if (this.tracingService && traceId) {
+          try {
+            spanId = await this.tracingService.startSpan({
+              traceId,
+              name: `${node.type}:${nodeId}`,
+              kind: 'internal',
+              attributes: { nodeId, nodeType: node.type, nodeName: node.name || node.id },
+            });
+          } catch (e) {
+            this.logger.warn(`Failed to start span for node ${nodeId}: ${e instanceof Error ? e.message : 'Unknown'}`);
+          }
+        }
+
         try {
           sseSubject?.next({
             type: 'node_status',
@@ -185,6 +219,18 @@ export class WorkflowExecutorService {
 
           context[nodeId] = output;
           executed.add(nodeId);
+
+          // End Span - 成功
+          if (this.tracingService && spanId) {
+            try {
+              await this.tracingService.endSpan(spanId, 'ok', [
+                { key: 'output_keys', value: output ? Object.keys(output) : [] },
+                { key: 'durationMs', value: nodeDuration },
+              ]);
+            } catch (e) {
+              this.logger.warn(`Failed to end span ${spanId}: ${e instanceof Error ? e.message : 'Unknown'}`);
+            }
+          }
 
           sseSubject?.next({
             type: 'node_status',
@@ -238,6 +284,18 @@ export class WorkflowExecutorService {
 
           failed.add(nodeId);
 
+          // End Span - 失败
+          if (this.tracingService && spanId) {
+            try {
+              await this.tracingService.endSpan(spanId, 'error', [
+                { key: 'error', value: error.message },
+                { key: 'errorType', value: isTimeout ? 'timeout' : isCancelled ? 'cancelled' : 'execution_error' },
+              ]);
+            } catch (e) {
+              this.logger.warn(`Failed to end span ${spanId} on error: ${e instanceof Error ? e.message : 'Unknown'}`);
+            }
+          }
+
           sseSubject?.next({
             type: 'node_status',
             data: {
@@ -282,6 +340,15 @@ export class WorkflowExecutorService {
       // 工作流整体超时控制
       await withTimeout(runLoop(), control.workflowTimeoutMs, 'workflow', workflow.name);
 
+      // End Trace - 成功
+      if (this.tracingService && traceId) {
+        try {
+          await this.tracingService.endTrace(traceId, 'success', context);
+        } catch (e) {
+          this.logger.warn(`Failed to end trace on success: ${e instanceof Error ? e.message : 'Unknown'}`);
+        }
+      }
+
       sseSubject?.next({
         type: 'done',
         data: {
@@ -300,6 +367,15 @@ export class WorkflowExecutorService {
     } catch (error) {
       const isTimeout = error instanceof TimeoutError;
       const isCancelled = error instanceof CancelledError;
+
+      // End Trace - 失败
+      if (this.tracingService && traceId) {
+        try {
+          await this.tracingService.endTrace(traceId, 'failed', undefined, error.message);
+        } catch (e) {
+          this.logger.warn(`Failed to end trace on failure: ${e instanceof Error ? e.message : 'Unknown'}`);
+        }
+      }
 
       sseSubject?.next({
         type: 'error',

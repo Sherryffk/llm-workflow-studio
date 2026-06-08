@@ -17,6 +17,9 @@ import {
   CaretDownOutlined,
   TeamOutlined,
   KeyOutlined,
+  BarChartOutlined,
+  SafetyOutlined,
+  NodeIndexOutlined,
 } from '@ant-design/icons'
 import { useStore } from '../../store'
 import './Layout.css'
@@ -33,6 +36,10 @@ const routeMeta: Record<string, { title: string }> = {
   '/debug': { title: '调试中心' },
   '/teams': { title: '团队管理' },
   '/api-keys': { title: 'API 密钥' },
+  '/cost-statistics': { title: '成本统计' },
+  '/rate-limit': { title: '限流监控' },
+  '/trace-list': { title: '全链路追踪' },
+  '/trace-detail': { title: '追踪详情' },
 }
 
 const Layout: React.FC = () => {
@@ -55,6 +62,9 @@ const Layout: React.FC = () => {
     { key: '/debug', icon: <BugOutlined />, label: '调试中心' },
     { key: '/teams', icon: <TeamOutlined />, label: '团队管理' },
     { key: '/api-keys', icon: <KeyOutlined />, label: 'API 密钥' },
+    { key: '/cost-statistics', icon: <BarChartOutlined />, label: '成本统计' },
+    { key: '/rate-limit', icon: <SafetyOutlined />, label: '限流监控' },
+    { key: '/trace-list', icon: <NodeIndexOutlined />, label: '全链路追踪' },
   ]
 
   const userMenu = [
