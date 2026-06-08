@@ -13,9 +13,11 @@
 name: CD
 
 on:
-  push:
-    branches: [main]
-    tags: ['v*']
+  # 暂时禁用 CD，后续按需启用
+  # push:
+  #   branches: [main]
+  #   tags: ['v*']
+  workflow_dispatch: {}
 
 env:
   REGISTRY: ghcr.io
