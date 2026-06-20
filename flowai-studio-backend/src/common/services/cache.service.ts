@@ -16,7 +16,7 @@
  * - Spring Cache: @Cacheable + CacheManager 多级缓存
  * - 本设计: L1 LRU + L2 Redis 联动 + 互斥锁 + TTL 抖动 + 缓存统计
  */
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy,Optional } from '@nestjs/common';
 import { RedisService } from './redis.service';
 
 // ============================================================
@@ -240,7 +240,7 @@ export class CacheService implements OnModuleDestroy {
 
   constructor(
     private readonly redisService: RedisService,
-    config?: MultiLevelCacheConfig,
+    @Optional() config?: MultiLevelCacheConfig,
   ) {
     this.config = {
       l1MaxEntries: config?.l1MaxEntries ?? 1000,
