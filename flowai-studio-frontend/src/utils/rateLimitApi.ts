@@ -31,8 +31,13 @@ export async function getUserQuota(userId: string): Promise<UserQuota[]> {
 }
 
 export async function getCircuitBreakers(): Promise<CircuitBreakerStats[]> {
-  const res: any = await request.get('/rate-limit/circuit-breakers')
-  return res.circuitBreakers
+  try {
+    const res: any = await request.get('/rate-limit/circuit-breakers')
+    return res?.circuitBreakers ?? []
+  } catch (error) {
+    console.error('Failed to fetch circuit breakers:', error)
+    return []
+  }
 }
 
 export async function resetCircuitBreaker(name: string): Promise<{ success: boolean; message: string }> {

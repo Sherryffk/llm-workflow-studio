@@ -94,16 +94,26 @@ export async function getWorkflowTraces(workflowId: string, limit?: number): Pro
 
 /** 获取慢 Trace 列表 */
 export async function getSlowTraces(workflowId?: string, limit?: number): Promise<SlowTrace[]> {
-  const res: any = await request.get('/traces/slow/list', {
-    params: { workflowId, limit: limit || 10 },
-  })
-  return res
+  try {
+    const res: any = await request.get('/traces/slow/list', {
+      params: { workflowId, limit: limit || 10 },
+    })
+    return Array.isArray(res) ? res : res?.data ?? []
+  } catch (error) {
+    console.error('Failed to fetch slow traces:', error)
+    return []
+  }
 }
 
 /** 获取 Trace 统计概览 */
 export async function getTraceStats(workflowId?: string): Promise<TraceStats> {
-  const res: any = await request.get('/traces/stats/overview', {
-    params: { workflowId },
-  })
-  return res
+  try {
+    const res: any = await request.get('/traces/stats/overview', {
+      params: { workflowId },
+    })
+    return res ?? { total: 0, success: 0, failed: 0, successRate: '0%', avgDurationMs: 0 }
+  } catch (error) {
+    console.error('Failed to fetch trace stats:', error)
+    return { total: 0, success: 0, failed: 0, successRate: '0%', avgDurationMs: 0 }
+  }
 }
